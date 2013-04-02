@@ -33,3 +33,9 @@
                            "to" {:meter [1] :rhyme ["T" "UW"]}
                            "announce" {:meter [0 1 0] :rhyme ["AW" "N" "S"]}}))))
 
+(deftest tokens->rhyme-test
+  (is (= ["AW" "N" "S"]
+         (p/tokens->rhyme ["thrilled" "to" "announce"]
+                          {"thrilled" {:meter [1] :rhyme ["IH" "L" "D"]}
+                           "to" {:meter [1] :rhyme ["T" "UW"]}
+                           "announce" {:meter [0 1 0] :rhyme ["AW" "N" "S"]}}))))

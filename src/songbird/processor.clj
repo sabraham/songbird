@@ -60,3 +60,6 @@
        (map #(get-in dict [% :meter]))
        flatten))
 
+(defn tokens->rhyme
+  [tokens dict]
+  (get-in dict [(last tokens) :rhyme]))
