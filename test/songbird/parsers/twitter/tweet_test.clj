@@ -12,13 +12,14 @@
           "{\"text\": \"this is my status\",\"user\": {\"screen_name\": \"sabraham\"}}"))))
 
 (deftest json->minimal-map-test
-  (is (= {"text" "this is my status" "screen_name" "sabraham"}
+  (is (= {"text" "this is my status" "screen_name" "sabraham" "id" 123}
        (t/json->minimal-map {"text" "this is my status"
-                             "user" {"screen_name" "sabraham"}}
-                            [["text"] ["user" "screen_name"]]))))
+                             "user" {"screen_name" "sabraham"}
+                             "id" 123}
+                            [["text"] ["user" "screen_name"] ["id"]]))))
 
 (deftest payload->keyworded-minimal-map-test
-  (is (= {:text "this is my status" :screen_name "sabraham"}
+  (is (= {:text "this is my status" :screen_name "sabraham" :id 123}
          (t/payload->keyworded-minimal-map
-          "{\"text\": \"this is my status\",\"user\": {\"screen_name\": \"sabraham\"}}"
-          [["text"] ["user" "screen_name"]]))))
+          "{\"text\": \"this is my status\",\"user\": {\"screen_name\": \"sabraham\"}, \"id\": 123}"
+          [["text"] ["user" "screen_name"] ["id"]]))))

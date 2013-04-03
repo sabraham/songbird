@@ -4,7 +4,8 @@
 
 (def MINIMAL-MAP-STRUCTURE
   [["text"]
-   ["user" "screen_name"]])
+   ["user" "screen_name"]
+   ["id"]])
 
 (defn payload->json
   [payload]
