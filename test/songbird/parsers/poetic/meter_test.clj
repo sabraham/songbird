@@ -1,28 +1,22 @@
 (ns songbird.parsers.poetic.meter-test
   (:use [clojure.test])
-  (:require [songbird.parsers.poetic.meter :as m]))
+  (:require [songbird.parsers.poetic.meter :as m])
+  (:import [songbird.parsers.poetic.meter Foot]))
 
 (deftest unstressed?-test
   (is (= true (m/unstressed? 0)))
   (is (= false (m/unstressed? 1)))
   (is (= false (m/unstressed? 2))))
 
-(deftest iamb?-test
-  (is (m/iamb? [0 1]))
-  (is (m/iamb? [0 2]))
-  (is (not (m/iamb? [0])))
-  (is (not (m/iamb? [1 0])))
-  (is (not (m/iamb? [])))
-  (is (not (m/iamb? [0 1 0])))
-  (is (not (m/iamb? [0 1 1]))))
+(deftest Foot-test
+  (is (m/count-syllables (new Foot [1 0])) 2)
+  (is (m/count-syllables (new Foot [1 0 1])) 3)
+  (is (m/=foot? (new Foot [1 0 1]) [1 0 1]))
+  (is (m/=foot? (new Foot [1 0 1]) [1 0 2]))
+  (is (not (m/=foot? (new Foot [1 0 1]) [1 0 2 0]))))
 
-(deftest anapaest?-test
-  (is (m/anapaest? [0 0 1]))
-  (is (m/anapaest? [0 0 2]))
-  (is (not (m/anapaest? [0 0 0])))
-  (is (not (m/anapaest? [0 1 0])))
-  (is (not (m/anapaest? [0 0 1 0])))
-  (is (not (m/anapaest? [0 0 1 2])))
-  (is (not (m/anapaest? [0])))
-  (is (not (m/anapaest? [1 0])))
-  (is (not (m/anapaest? []))))
+(deftest meter?-factory-test
+  (is (m/meter?-factory 2 [m/iamb] [0 1 0 1]))
+  (is (m/meter?-factory 2 [m/iamb m/trochee] [0 1 1 0]))
+  (is (m/meter?-factory 3 [m/iamb m/trochee] [0 1 1 0 0 1]))
+  (is (not (m/meter?-factory 3 [m/iamb m/trochee] [0 1 1 0 1 0]))))

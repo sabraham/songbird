@@ -14,51 +14,93 @@
   (when syllable
     (not (unstressed? syllable))))
 
-(defn- factory
-  [pattern meter]
-  (if (= (.length pattern) (count meter))
-    (loop [pattern pattern
-           meter meter
-           state true]
-      (let [p (first pattern)]
-        (if (and p state)
-          (if ((if (= p \*) unstressed? stressed?) (first meter))
-            (recur (rest pattern) (rest meter) true)
-            (recur (rest pattern) (rest meter) false))
-          state)))
-    false))
+(defprotocol FootProtocol
+  (count-syllables [this])
+  (=foot? [this test-meter]))
 
-(factory "**" [0 0 1])
+(extend-type nil
+  FootProtocol
+  (count-syllables [this] 0)
+  (=foot? [this test-meter] false))
+
+(defrecord Foot [meter]
+  FootProtocol
+  (count-syllables [this] (count (:meter this)))
+  (=foot? [this test-meter]
+    (if (= (count-syllables this) (count test-meter))
+      (loop [this this
+             test-meter test-meter
+             state true]
+        (let [stress (first (:meter this))]
+          (if (and stress state)
+            (if (or (and (unstressed? stress) (unstressed? (first test-meter)))
+                    (and (stressed?   stress) (stressed?   (first test-meter))))
+              (recur (Foot. (rest (:meter this))) (rest test-meter) true)
+              (recur (Foot. (rest (:meter this))) (rest test-meter) false))
+            state)))
+      false)))
+
+(defn- symbols->foot
+  [symbols]
+  (let [symbol-map {\* 0 \- 1}]
+    (map symbol-map (seq symbols))))
+
+(defn symbols->Foot
+  [symbols]
+  (->> symbols symbols->foot (new Foot)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; disyllables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn dibrach? [foot] (factory "**" foot))
+(def dibrach (symbols->Foot "**"))
+(def iamb    (symbols->Foot "*-"))
+(def trochee (symbols->Foot "-*"))
+(def spondee (symbols->Foot "--"))
 
-(defn iamb?    [foot] (factory "*-" foot))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; trisyllables
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn trochee? [foot] (factory "-*" foot))
+(def tribach      (symbols->Foot "***"))
+(def dactyl       (symbols->Foot "-**"))
+(def amphibrach   (symbols->Foot "*-*"))
+(def anapaest     (symbols->Foot "**-"))
+(def bacchius     (symbols->Foot "*--"))
+(def cretic       (symbols->Foot "-*-"))
+(def antibacchius (symbols->Foot "--*"))
+(def molossus     (symbols->Foot "---"))
 
-(defn spondee? [foot] (factory "--" foot))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; meter
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;; trisyllables
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn meter?-factory
+  [length feet meter]
+  (let [feet (take length (cycle feet))]
+    (loop [feet feet
+           meter meter
+           state true]
+      (let [foot (first feet)
+            num-syllables (count-syllables foot)]
+        (if (and foot state)
+          (if (=foot? foot (take num-syllables meter))
+            (recur (rest feet) (drop num-syllables meter) true)
+            (recur (rest feet) (drop num-syllables meter) false))
+          state)))))
 
-(defn tribrach?     [syllables] (factory "***" syllables))
+(defn dimeter?
+  [feet meter]
+  (meter?-factory 2 feet meter))
 
-(defn dactyl?       [syllables] (factory "-**" syllables))
+(defn trimeter?
+  [feet meter]
+  (meter?-factory 3 feet meter))
 
-(defn amphibrach?   [syllables] (factory "*-*" syllables))
+(defn tetrameter?
+  [feet meter]
+  (meter?-factory 4 feet meter))
 
-(defn anapaest?     [syllables] (factory "**-" syllables))
-
-(defn bacchius?     [syllables] (factory "*--" syllables))
-
-(defn cretic?       [syllables] (factory "-*-" syllables))
-
-(defn antibacchius? [syllables] (factory "--*" syllables))
-
-(defn molossus?     [syllables] (factory "---" syllables))
-
+(defn pentameter?
+  [feet meter]
+  (meter?-factory 5 feet meter))
